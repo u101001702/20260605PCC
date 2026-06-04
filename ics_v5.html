@@ -1,0 +1,374 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.pg{padding:18px 14px 32px;font-family:var(--font-sans)}
+.hdr{text-align:center;margin-bottom:18px}
+.hdr h1{font-size:17px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.hdr p{font-size:12px;color:var(--color-text-secondary)}
+
+.chart-wrap{overflow-x:auto;margin-bottom:20px}
+.chart{min-width:860px;padding:6px 8px 8px;display:flex;flex-direction:column;align-items:center}
+.vl{width:1px;background:var(--color-border-secondary)}
+.hl{height:1px;background:var(--color-border-secondary)}
+.dl{border-top:1px dashed var(--color-border-secondary);background:none;height:0}
+
+.nd{border-radius:8px;border:0.5px solid;padding:7px 12px;text-align:center;cursor:pointer;transition:opacity .15s;user-select:none}
+.nd:hover{opacity:.78}
+.nd .rl{font-size:11px;font-weight:500;margin-bottom:2px}
+.nd .nm{font-size:11px}
+.nd .mt{font-size:10px;margin-top:2px;opacity:.65}
+.nd .em{font-size:11px;font-style:italic;opacity:.55}
+
+.ic {background:#EEEDFE;border-color:#534AB7;color:#3C3489}.ic .nm{color:#534AB7}
+.st {background:#F1EFE8;border-color:#5F5E5A;color:#444441}.st .nm{color:#5F5E5A}
+.op {background:#FAECE7;border-color:#993C1D;color:#712B13}.op .nm{color:#993C1D}
+.pl {background:#E1F5EE;border-color:#0F6E56;color:#085041}.pl .nm{color:#0F6E56}
+.sb {background:#FAECE7;border-color:#D85A30;color:#712B13}.sb .nm{color:#993C1D}
+.med{background:#FFF3EE;border-color:#D85A30;color:#712B13}.med .nm{color:#993C1D}
+.sq {background:#FFF3EE;border-color:#D85A30;color:#712B13}.sq .nm{color:#993C1D}
+.lg {background:#E6F1FB;border-color:#185FA5;color:#0C447C}.lg .nm{color:#185FA5}
+
+.roster{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+.r-section{border:0.5px solid var(--color-border-tertiary);border-radius:10px;overflow:hidden}
+.r-head{padding:8px 14px;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:space-between}
+.r-row{display:flex;align-items:center;gap:0;padding:6px 14px;border-top:0.5px solid var(--color-border-tertiary);font-size:12px}
+.r-role{min-width:88px;color:var(--color-text-secondary);font-size:11px}
+.r-name{font-weight:500;color:var(--color-text-primary);margin-right:6px}
+.r-bg{color:var(--color-text-secondary);font-size:11px}
+.r-empty{padding:8px 14px;font-size:11px;font-style:italic;color:var(--color-text-tertiary)}
+.badge-edit{font-size:10px;padding:2px 7px;border-radius:4px;border:0.5px solid;background:transparent;cursor:pointer}
+.badge-edit:hover{opacity:.75}
+
+.mbg{background:rgba(0,0,0,0.28);min-height:360px;display:none;align-items:center;justify-content:center;border-radius:12px;margin:10px 0;padding:14px}
+.mbg.open{display:flex}
+.mbox{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:12px;padding:18px;width:100%;max-width:400px}
+.mtag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-bottom:6px}
+.mbox h2{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px}
+.mlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:280px;overflow-y:auto}
+.mrow{display:flex;gap:5px;align-items:center}
+.mrow input{font-size:12px;padding:6px 8px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary)}
+.mrow .mi{flex:1}.mrow .mb{flex:1.2}
+.mrow .mrole{font-size:10px;min-width:48px;text-align:center;padding:4px;border-radius:4px;background:var(--color-background-tertiary);color:var(--color-text-secondary)}
+.mrow .mdel{font-size:16px;color:var(--color-text-secondary);cursor:pointer;padding:0 3px;line-height:1;border:none;background:transparent}
+.mrow .mdel:hover{color:var(--color-text-danger)}
+.badd{font-size:12px;color:var(--color-text-info);border:0.5px dashed var(--color-border-info);background:transparent;padding:6px;border-radius:6px;cursor:pointer;width:100%;margin-bottom:8px}
+.badd:hover{background:var(--color-background-info)}
+.mbtns{display:flex;gap:6px;margin-top:12px}
+.bsave{flex:1;padding:8px;border-radius:8px;border:0.5px solid #185FA5;background:#E6F1FB;color:#0C447C;font-size:13px;font-weight:500;cursor:pointer}
+.bsave:hover{background:#B5D4F4}
+.bcancel{padding:8px 12px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:13px;cursor:pointer}
+.bcancel:hover{background:var(--color-background-secondary)}
+
+.sbar{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:0.5px solid var(--color-border-tertiary)}
+.sbar span{font-size:12px;color:var(--color-text-secondary)}
+.bexp{padding:6px 12px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.bexp:hover{background:var(--color-background-secondary)}
+</style>
+
+<div class="pg">
+<h2 class="sr-only">ICS 人員配置互動網頁</h2>
+<div class="hdr">
+  <h1>ICS 事故指揮系統 — 人員配置</h1>
+  <p>點擊任意職位填寫成員，清單即時呈現於下方</p>
+</div>
+
+<div class="chart-wrap"><div class="chart">
+
+  <!-- IC + staff -->
+  <div style="display:flex;align-items:center">
+    <div class="nd ic" onclick="openModal('ic')" style="min-width:148px">
+      <div class="rl">事故指揮官 IC</div>
+      <div id="dn-ic" class="nm">黃碩焜</div>
+    </div>
+    <div style="width:14px" class="dl"></div>
+    <div style="border-left:1px dashed var(--color-border-secondary);display:flex;flex-direction:column;gap:5px">
+      <div style="display:flex;align-items:center">
+        <div style="width:12px" class="dl"></div>
+        <div class="nd st" onclick="openModal('safety')" style="min-width:112px">
+          <div class="rl">安全官</div><div id="dn-safety" class="nm">何長益</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <div style="width:12px" class="dl"></div>
+        <div class="nd st" onclick="openModal('liaison')" style="min-width:112px">
+          <div class="rl">聯絡官</div><div id="dn-liaison" class="nm">張皓亭</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vl" style="height:16px"></div>
+  <!-- 3-way branch: ops, plan, log -->
+  <div style="display:flex"><div style="width:240px" class="hl"></div><div style="width:240px" class="hl"></div></div>
+  <div style="display:flex;width:480px;justify-content:space-between">
+    <div class="vl" style="height:14px"></div>
+    <div class="vl" style="height:14px"></div>
+    <div class="vl" style="height:14px"></div>
+  </div>
+
+  <!-- Three columns -->
+  <div style="display:flex;gap:20px;align-items:flex-start">
+
+    <!-- 執行組 -->
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="nd op" onclick="openModal('ops')" style="min-width:130px">
+        <div class="rl">執行組</div><div id="dn-ops" class="nm">高誌駿</div><div id="mt-ops" class="mt"></div>
+      </div>
+      <div class="vl" style="height:12px"></div>
+      <div style="width:480px" class="hl"></div>
+      <div style="display:flex;width:480px;justify-content:space-between">
+        <div class="vl" style="height:12px"></div><div class="vl" style="height:12px"></div>
+      </div>
+      <div style="display:flex;gap:20px;align-items:flex-start">
+        <!-- 醫療組 -->
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div class="nd med" onclick="openModal('med')" style="min-width:114px">
+            <div class="rl">醫療組</div><div id="dn-med" class="em">待填</div><div id="mt-med" class="mt"></div>
+          </div>
+          <div class="vl" style="height:10px"></div>
+          <div style="width:300px" class="hl"></div>
+          <div style="display:flex;width:300px;justify-content:space-between">
+            <div class="vl" style="height:10px"></div><div class="vl" style="height:10px"></div>
+            <div class="vl" style="height:10px"></div><div class="vl" style="height:10px"></div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <div class="nd sb" onclick="openModal('triage')" style="min-width:64px">
+              <div class="rl">檢傷</div><div id="dn-triage" class="em">待填</div><div id="mt-triage" class="mt"></div>
+            </div>
+            <div class="nd sb" onclick="openModal('treatment')" style="min-width:64px">
+              <div class="rl">中重傷區</div><div id="dn-treatment" class="em">待填</div><div id="mt-treatment" class="mt"></div>
+            </div>
+            <div class="nd sb" onclick="openModal('minor')" style="min-width:64px">
+              <div class="rl">輕傷區</div><div id="dn-minor" class="em">待填</div><div id="mt-minor" class="mt"></div>
+            </div>
+            <div class="nd sb" onclick="openModal('transport')" style="min-width:64px">
+              <div class="rl">後送</div><div id="dn-transport" class="em">待填</div><div id="mt-transport" class="mt"></div>
+            </div>
+          </div>
+        </div>
+        <!-- 搜救組 -->
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div class="nd sb" onclick="openModal('rescue')" style="min-width:100px">
+            <div class="rl">搜救組</div><div id="dn-rescue" class="em">待填</div><div id="mt-rescue" class="mt"></div>
+          </div>
+          <div class="vl" style="height:10px"></div>
+          <div style="width:216px" class="hl"></div>
+          <div style="display:flex;width:216px;justify-content:space-between">
+            <div class="vl" style="height:10px"></div><div class="vl" style="height:10px"></div><div class="vl" style="height:10px"></div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <div class="nd sq" onclick="openModal('squad1')" style="min-width:64px">
+              <div class="rl">一分隊</div><div id="dn-squad1" class="em">待填</div><div id="mt-squad1" class="mt"></div>
+            </div>
+            <div class="nd sq" onclick="openModal('squad2')" style="min-width:64px">
+              <div class="rl">二分隊</div><div id="dn-squad2" class="em">待填</div><div id="mt-squad2" class="mt"></div>
+            </div>
+            <div class="nd sq" onclick="openModal('squad3')" style="min-width:64px">
+              <div class="rl">三分隊</div><div id="dn-squad3" class="em">待填</div><div id="mt-squad3" class="mt"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 計劃組 -->
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="nd pl" onclick="openModal('plan')" style="min-width:120px">
+        <div class="rl">計劃組</div><div id="dn-plan" class="em">待填</div><div id="mt-plan" class="mt"></div>
+      </div>
+    </div>
+
+    <!-- 後勤組 -->
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="nd lg" onclick="openModal('log')" style="min-width:110px">
+        <div class="rl">後勤組</div><div id="dn-log" class="nm">明麗</div><div id="mt-log" class="mt"></div>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+
+<!-- ROSTER -->
+<div class="roster" id="roster"></div>
+
+<!-- MODAL -->
+<div class="mbg" id="mbg">
+  <div class="mbox">
+    <div class="mtag" id="mtag"></div>
+    <h2 id="mtitle"></h2>
+    <div class="mlist" id="mlist"></div>
+    <button class="badd" onclick="addRow()"><i class="ti ti-plus" aria-hidden="true"></i> 新增成員</button>
+    <div class="mbtns">
+      <button class="bcancel" onclick="closeModal()">取消</button>
+      <button class="bsave" onclick="saveModal()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="sbar">
+  <span id="stxt">已填：0 人</span>
+  <button class="bexp" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> 匯出名單</button>
+</div>
+</div>
+
+<script>
+const CFG = {
+  ic:        {label:'事故指揮官 IC', group:'指揮幕僚', hs:'ic',   leaderRole:'指揮官'},
+  safety:    {label:'安全官',        group:'指揮幕僚', hs:'staff',leaderRole:'安全官'},
+  liaison:   {label:'聯絡官',        group:'指揮幕僚', hs:'staff',leaderRole:'聯絡官'},
+  ops:       {label:'執行組',        group:'執行組',   hs:'ops',  leaderRole:'組長'},
+  med:       {label:'醫療組',        group:'執行組',   hs:'med',  leaderRole:'組長'},
+  triage:    {label:'檢傷',          group:'執行組',   hs:'sub',  leaderRole:'負責人'},
+  treatment: {label:'中重傷區',      group:'執行組',   hs:'sub',  leaderRole:'負責人'},
+  minor:     {label:'輕傷區',        group:'執行組',   hs:'sub',  leaderRole:'負責人'},
+  transport: {label:'後送',          group:'執行組',   hs:'sub',  leaderRole:'負責人'},
+  rescue:    {label:'搜救組',        group:'執行組',   hs:'sub',  leaderRole:'組長'},
+  squad1:    {label:'搜救一分隊',    group:'執行組',   hs:'squad',leaderRole:'分隊長'},
+  squad2:    {label:'搜救二分隊',    group:'執行組',   hs:'squad',leaderRole:'分隊長'},
+  squad3:    {label:'搜救三分隊',    group:'執行組',   hs:'squad',leaderRole:'分隊長'},
+  plan:      {label:'計劃組',        group:'計劃組',   hs:'plan', leaderRole:'組長'},
+  log:       {label:'後勤組',        group:'後勤組',   hs:'log',  leaderRole:'組長'},
+};
+
+const HS = {
+  ic:   {bg:'#EEEDFE',color:'#3C3489'},
+  staff:{bg:'#F1EFE8',color:'#444441'},
+  ops:  {bg:'#FAECE7',color:'#712B13'},
+  med:  {bg:'#FFF3EE',color:'#712B13'},
+  sub:  {bg:'#FAECE7',color:'#712B13'},
+  squad:{bg:'#FFF3EE',color:'#712B13'},
+  plan: {bg:'#E1F5EE',color:'#085041'},
+  log:  {bg:'#E6F1FB',color:'#0C447C'},
+};
+
+const ROSTER_GROUPS = [
+  {key:'指揮幕僚', color:'#534AB7', bg:'#EEEDFE'},
+  {key:'執行組',   color:'#993C1D', bg:'#FAECE7'},
+  {key:'計劃組',   color:'#0F6E56', bg:'#E1F5EE'},
+  {key:'後勤組',   color:'#185FA5', bg:'#E6F1FB'},
+];
+
+const DATA = {};
+const DEFAULTS = {
+  ic:      [{role:'指揮官', name:'黃碩焜', bg:''}],
+  safety:  [{role:'安全官', name:'何長益', bg:''}],
+  liaison: [{role:'聯絡官', name:'張皓亭', bg:''}],
+  ops:     [{role:'組長',   name:'高誌駿', bg:''}],
+  log:     [{role:'組長',   name:'明麗',   bg:''}],
+};
+Object.keys(CFG).forEach(k => { DATA[k] = (DEFAULTS[k]||[]).map(m=>({...m})); });
+
+let CUR = null;
+
+function openModal(k) {
+  CUR = k;
+  const c = CFG[k], ts = HS[c.hs];
+  const tag = document.getElementById('mtag');
+  tag.textContent = c.label; tag.style.background = ts.bg; tag.style.color = ts.color;
+  document.getElementById('mtitle').textContent = c.label + ' 成員';
+  renderMList(k);
+  document.getElementById('mbg').classList.add('open');
+}
+
+function renderMList(k) {
+  const c = CFG[k], list = document.getElementById('mlist');
+  list.innerHTML = '';
+  if (!DATA[k].length) DATA[k].push({role:c.leaderRole, name:'', bg:''});
+  DATA[k].forEach((m,i) => {
+    const row = document.createElement('div');
+    row.className = 'mrow';
+    row.innerHTML = `<span class="mrole">${i===0?c.leaderRole:'組員'}</span>
+      <input class="mi" type="text" placeholder="姓名" value="${esc(m.name)}">
+      <input class="mb" type="text" placeholder="身份/背景" value="${esc(m.bg)}">
+      ${i>0?`<button class="mdel" onclick="delRow(${i})" aria-label="刪除">×</button>`:'<span style="width:18px"></span>'}`;
+    list.appendChild(row);
+  });
+}
+
+function esc(s){return (s||'').replace(/"/g,'&quot;');}
+
+function addRow(){if(!CUR)return;DATA[CUR].push({role:'組員',name:'',bg:''});renderMList(CUR);}
+
+function delRow(i){if(!CUR)return;DATA[CUR].splice(i,1);renderMList(CUR);}
+
+function saveModal(){
+  if(!CUR)return;
+  const c=CFG[CUR], rows=document.querySelectorAll('#mlist .mrow');
+  DATA[CUR]=[];
+  rows.forEach((row,i)=>{
+    const ins=row.querySelectorAll('input');
+    DATA[CUR].push({role:i===0?c.leaderRole:'組員', name:ins[0].value.trim(), bg:ins[1].value.trim()});
+  });
+  updateNode(CUR); closeModal(); renderRoster(); updateStatus();
+}
+
+function closeModal(){document.getElementById('mbg').classList.remove('open');CUR=null;}
+
+function updateNode(k){
+  const members=DATA[k].filter(m=>m.name);
+  const el=document.getElementById('dn-'+k), mt=document.getElementById('mt-'+k);
+  if(!el)return;
+  const leader=members[0];
+  if(leader){el.textContent=leader.name+(leader.bg?' · '+leader.bg:'');el.className='nm';}
+  else{el.textContent='待填';el.className='em';}
+  if(mt){const crew=members.slice(1);mt.textContent=crew.length?'共 '+members.length+' 人':'';}
+}
+
+function renderRoster(){
+  const container=document.getElementById('roster');
+  container.innerHTML='';
+  ROSTER_GROUPS.forEach(g=>{
+    const keys=Object.keys(CFG).filter(k=>CFG[k].group===g.key);
+    const allMembers=[];
+    keys.forEach(k=>DATA[k].filter(m=>m.name).forEach(m=>allMembers.push({section:CFG[k].label,...m})));
+    const sec=document.createElement('div');
+    sec.className='r-section';
+    const head=document.createElement('div');
+    head.className='r-head';
+    head.style.background=g.bg; head.style.color=g.color;
+    head.innerHTML=`<span style="font-weight:500">${g.key}</span><button class="badge-edit" style="border-color:${g.color};color:${g.color}" onclick="openFirstInGroup('${g.key}')">編輯</button>`;
+    sec.appendChild(head);
+    const body=document.createElement('div'); body.className='r-body';
+    if(!allMembers.length){body.innerHTML='<div class="r-empty">尚未填寫任何成員</div>';}
+    else{
+      allMembers.forEach(m=>{
+        const row=document.createElement('div'); row.className='r-row';
+        row.innerHTML=`<span class="r-role">${m.section} · ${m.role}</span><span class="r-name">${m.name}</span>${m.bg?'<span class="r-bg">'+m.bg+'</span>':''}`;
+        body.appendChild(row);
+      });
+    }
+    sec.appendChild(body); container.appendChild(sec);
+  });
+}
+
+function openFirstInGroup(g){
+  const k=Object.keys(CFG).find(k=>CFG[k].group===g);
+  if(k) openModal(k);
+}
+
+function updateStatus(){
+  let t=0; Object.keys(DATA).forEach(k=>DATA[k].forEach(m=>{if(m.name)t++;}));
+  document.getElementById('stxt').textContent='已填：'+t+' 人';
+}
+
+function exportData(){
+  let lines=['ICS 人員配置清單\n'];
+  ROSTER_GROUPS.forEach(g=>{
+    lines.push('【'+g.key+'】');
+    Object.keys(CFG).filter(k=>CFG[k].group===g.key).forEach(k=>{
+      const members=DATA[k].filter(m=>m.name);
+      if(members.length){
+        lines.push('  ['+CFG[k].label+']');
+        members.forEach(m=>lines.push('    '+m.role+'：'+m.name+(m.bg?'（'+m.bg+'）':'')));
+      }
+    });
+    lines.push('');
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='ICS人員配置.txt'; a.click();
+}
+
+Object.keys(CFG).forEach(k=>updateNode(k));
+renderRoster(); updateStatus();
+</script>
