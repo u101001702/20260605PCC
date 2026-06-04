@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>20260604 PCC ICS 人員配置</title>
+  <title>ICS 人員配置</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -306,6 +306,8 @@ async function saveModal(){
   }
   
   updateNode(CUR); closeModal(); renderRoster(); updateStatus();
+  
+  setTimeout(() => loadDataFromGoogleSheet(), 500);
 }
 
 async function syncToGoogleSheet(key, member) {
@@ -407,8 +409,44 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
+async function loadDataFromGoogleSheet() {
+  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+    return;
+  }
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL);
+    const result = await response.json();
+    if(result.success && result.data) {
+      DATA = {};
+      Object.keys(CFG).forEach(k => { DATA[k] = []; });
+      
+      result.data.forEach(item => {
+        const roleLabel = item.role;
+        const key = Object.keys(CFG).find(k => CFG[k].label === roleLabel);
+        if(key) {
+          const member = {
+            role: item.title,
+            name: item.name,
+            bg: item.bg
+          };
+          DATA[key].push(member);
+        }
+      });
+      
+      renderRoster();
+      updateStatus();
+      Object.keys(CFG).forEach(k => updateNode(k));
+    }
+  } catch(err) {
+    console.log('自動讀取 Google Sheet 失敗，將在 3 秒後重試');
+  }
+}
+
 Object.keys(CFG).forEach(k=>updateNode(k));
 renderRoster(); updateStatus();
+
+loadDataFromGoogleSheet();
+setInterval(loadDataFromGoogleSheet, 3000);
 </script>
 </body>
 </html>
