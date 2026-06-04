@@ -43,6 +43,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .r-name{font-weight:500;color:#333;margin-right:6px}
 .r-bg{color:#999;font-size:11px}
 .r-empty{padding:8px 14px;font-size:11px;font-style:italic;color:#bbb}
+.r-del-btn{background:transparent;border:none;font-size:20px;color:#d32f2f;cursor:pointer;padding:0 8px;line-height:1;font-weight:300}
+.r-del-btn:hover{color:#ff5252}
 
 .mbg{background:rgba(0,0,0,0.28);min-height:360px;display:none;align-items:center;justify-content:center;border-radius:12px;margin:10px 0;padding:14px}
 .mbg.open{display:flex}
@@ -213,7 +215,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 <div class="toast" id="toast"></div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCd1P2qOtIooZCz1cQXARMp1-bW8nDxIeGj1-ULfOoWLm8smXRIGdwuDcIcz4e7-YM/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLkfsZZqm2tLWgaqI0BfqqKL52q74u7lGstloCgljpjsaAZN7tv8EYFNkQIVdMl7tZ/exec";
 
 const CFG = {
   ic:        {label:'事故指揮官 IC', group:'指揮幕僚', hs:'ic',   leaderRole:'指揮官'},
@@ -336,9 +338,35 @@ async function syncToGoogleSheet(key, member) {
     const result = await response.json();
     if(result.success) {
       showToast('✅ 已同步至 Google Sheet');
+    } else if(result.isDuplicate) {
+      showToast('⚠️ ' + result.message + '，跳過重複登錄');
+    } else {
+      showToast('❌ 上傳失敗：' + (result.error || '未知錯誤'));
     }
   } catch(err) {
     showToast('❌ 同步失敗：' + err.message);
+  }
+}
+
+async function deletePersonFromSheet(rowIndex) {
+  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+    showToast('⚠️ 無法刪除');
+    return;
+  }
+  try {
+    const url = GOOGLE_SCRIPT_URL.replace('/exec', '') + '/exec?rowIndex=' + rowIndex;
+    const response = await fetch(url.replace('/exec', '') + '/exec?rowIndex=' + rowIndex, {
+      method: 'GET',
+    });
+    const result = await response.json();
+    if(result.success) {
+      showToast('✅ 已刪除此人員');
+      setTimeout(() => loadDataFromGoogleSheet(), 500);
+    } else {
+      showToast('❌ 刪除失敗');
+    }
+  } catch(err) {
+    showToast('❌ 刪除失敗：' + err.message);
   }
 }
 
@@ -373,7 +401,18 @@ function renderRoster(){
     else{
       allMembers.forEach(m=>{
         const row=document.createElement('div'); row.className='r-row';
-        row.innerHTML=`<span class="r-role">${m.section} · ${m.role}</span><span class="r-name">${m.name}</span>${m.bg?'<span class="r-bg">'+m.bg+'</span>':''}`;
+        row.style.justifyContent='space-between';
+        const nameDiv = document.createElement('div');
+        nameDiv.style.flex='1';
+        nameDiv.innerHTML=`<span class="r-role">${m.section} · ${m.role}</span><span class="r-name">${m.name}</span>${m.bg?'<span class="r-bg">'+m.bg+'</span>':''}`;
+        row.appendChild(nameDiv);
+        
+        const delBtn = document.createElement('button');
+        delBtn.className='r-del-btn';
+        delBtn.innerHTML='×';
+        delBtn.onclick=()=>deletePersonFromSheet(m.rowIndex);
+        row.appendChild(delBtn);
+        
         body.appendChild(row);
       });
     }
