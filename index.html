@@ -411,17 +411,27 @@ function showToast(msg) {
 
 async function loadDataFromGoogleSheet() {
   if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+    console.log('❌ 未設定有效的 Google Apps Script URL');
     return;
   }
   try {
+    console.log('🔄 開始從 Google Sheet 讀取資料...');
     const response = await fetch(GOOGLE_SCRIPT_URL);
+    console.log('📡 API 回應狀態:', response.status);
+    
     const result = await response.json();
+    console.log('📊 API 返回的資料:', result);
+    
     if(result.success && result.data) {
+      console.log('✅ 讀取成功，共', result.data.length, '筆資料');
+      
       DATA = {};
       Object.keys(CFG).forEach(k => { DATA[k] = []; });
       
-      result.data.forEach(item => {
+      result.data.forEach((item, idx) => {
         const roleLabel = item.role;
+        console.log('📍 處理第', idx+1, '筆：職位=', roleLabel, '、姓名=', item.name);
+        
         const key = Object.keys(CFG).find(k => CFG[k].label === roleLabel);
         if(key) {
           const member = {
@@ -430,15 +440,22 @@ async function loadDataFromGoogleSheet() {
             bg: item.bg
           };
           DATA[key].push(member);
+          console.log('✔️ 成功對應到', key);
+        } else {
+          console.log('⚠️ 找不到職位代碼，職位標籤為:', roleLabel);
         }
       });
       
+      console.log('📋 最終 DATA 物件:', DATA);
       renderRoster();
       updateStatus();
       Object.keys(CFG).forEach(k => updateNode(k));
+      console.log('✅ 網頁已更新');
+    } else {
+      console.log('❌ API 返回失敗:', result.error);
     }
   } catch(err) {
-    console.log('自動讀取 Google Sheet 失敗，將在 3 秒後重試');
+    console.log('❌ 讀取失敗:', err.message);
   }
 }
 
