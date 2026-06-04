@@ -8,10 +8,11 @@
   <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5}
-.pg{padding:18px 14px 32px;font-family:var(--font-sans)}
+.pg{padding:18px 14px 32px}
 .hdr{text-align:center;margin-bottom:18px}
 .hdr h1{font-size:17px;font-weight:500;color:#333;margin-bottom:3px}
 .hdr p{font-size:12px;color:#666}
+.hdr .note{font-size:11px;color:#d32f2f;margin-top:6px}
 
 .chart-wrap{overflow-x:auto;margin-bottom:20px}
 .chart{min-width:860px;padding:6px 8px 8px;display:flex;flex-direction:column;align-items:center}
@@ -38,7 +39,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .roster{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
 .r-section{border:0.5px solid #ddd;border-radius:10px;overflow:hidden}
 .r-head{padding:8px 14px;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:space-between}
-.r-row{display:flex;align-items:center;gap:0;padding:6px 14px;border-top:0.5px solid #eee;font-size:12px}
+.r-row{display:flex;align-items:center;gap:0;padding:6px 14px;border-top:0.5px solid #eee;font-size:12px;justify-content:space-between}
 .r-role{min-width:88px;color:#666;font-size:11px}
 .r-name{font-weight:500;color:#333;margin-right:6px}
 .r-bg{color:#999;font-size:11px}
@@ -66,13 +67,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .bcancel{padding:8px 12px;border-radius:8px;border:0.5px solid #ddd;background:transparent;color:#666;font-size:13px;cursor:pointer}
 .bcancel:hover{background:#f5f5f5}
 
-.sbar{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:0.5px solid #eee}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:0.5px solid #eee;flex-wrap:wrap;gap:8px}
 .sbar span{font-size:12px;color:#999}
 .bexp{padding:6px 12px;border-radius:8px;border:0.5px solid #ddd;background:transparent;color:#666;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
 .bexp:hover{background:#f5f5f5}
 
 .toast{position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 16px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .3s;z-index:9999}
 .toast.show{opacity:1}
+
+.setup-panel{background:#fff3cd;border:0.5px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:18px;font-size:12px}
+.setup-panel a{color:#0066cc;text-decoration:underline}
   </style>
 </head>
 <body>
@@ -80,7 +84,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 <div class="pg">
 <div class="hdr">
   <h1>ICS 事故指揮系統 — 人員配置</h1>
-  <p>點擊任意職位填寫成員，自動同步至 Google Sheet</p>
+  <p>✅ Google Sheets API 版本（即時同步）</p>
+  <div class="note" id="sync-status">⏳ 初始化中...</div>
+</div>
+
+<div id="setup-panel" class="setup-panel" style="display:none">
+  ⚠️ <strong>需要配置：</strong>
+  <br>請在下方 HTML 代碼中填入你的 API Key 和 Sheet ID
+  <br><a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>
 </div>
 
 <div class="chart-wrap"><div class="chart">
@@ -88,20 +99,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <div style="display:flex;align-items:center">
     <div class="nd ic" onclick="openModal('ic')" style="min-width:148px">
       <div class="rl">事故指揮官 IC</div>
-      <div id="dn-ic" class="nm">黃碩焜</div>
+      <div id="dn-ic" class="nm">待填</div>
     </div>
     <div style="width:14px" class="dl"></div>
     <div style="border-left:1px dashed #ddd;display:flex;flex-direction:column;gap:5px">
       <div style="display:flex;align-items:center">
         <div style="width:12px" class="dl"></div>
         <div class="nd st" onclick="openModal('safety')" style="min-width:112px">
-          <div class="rl">安全官</div><div id="dn-safety" class="nm">何長益</div>
+          <div class="rl">安全官</div><div id="dn-safety" class="nm">待填</div>
         </div>
       </div>
       <div style="display:flex;align-items:center">
         <div style="width:12px" class="dl"></div>
         <div class="nd st" onclick="openModal('liaison')" style="min-width:112px">
-          <div class="rl">聯絡官</div><div id="dn-liaison" class="nm">張皓亭</div>
+          <div class="rl">聯絡官</div><div id="dn-liaison" class="nm">待填</div>
         </div>
       </div>
     </div>
@@ -119,7 +130,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 
     <div style="display:flex;flex-direction:column;align-items:center">
       <div class="nd op" onclick="openModal('ops')" style="min-width:130px">
-        <div class="rl">執行組</div><div id="dn-ops" class="nm">高誌駿</div><div id="mt-ops" class="mt"></div>
+        <div class="rl">執行組</div><div id="dn-ops" class="nm">待填</div><div id="mt-ops" class="mt"></div>
       </div>
       <div class="vl" style="height:12px"></div>
       <div style="width:480px" class="hl"></div>
@@ -184,7 +195,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 
     <div style="display:flex;flex-direction:column;align-items:center">
       <div class="nd lg" onclick="openModal('log')" style="min-width:110px">
-        <div class="rl">後勤組</div><div id="dn-log" class="nm">明麗</div><div id="mt-log" class="mt"></div>
+        <div class="rl">後勤組</div><div id="dn-log" class="nm">待填</div><div id="mt-log" class="mt"></div>
       </div>
     </div>
 
@@ -209,13 +220,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 <div class="sbar">
   <span id="stxt">已填：0 人</span>
   <button class="bexp" onclick="exportData()"><i class="fas fa-download"></i> 本機匯出</button>
+  <button class="bexp" onclick="refreshData()" style="color:#0C447C"><i class="fas fa-sync"></i> 重新同步</button>
 </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNZHj9uu9DA9p9Lc0oOostHv-h2UHwdZa6cThs-Bd6y4z033AyqBr4nmEpEaelAejY/exec";
+// ✅ 【已配置】
+const GOOGLE_API_KEY = "AIzaSyBY5i2BtSL5YNX1uhY65MnyiZ9xeiG8M5s";
+const GOOGLE_SHEET_ID = "19YSt5g8Q9qqW_Fuvhf7osc019je41irAzkjyHuobhH0";
+const SHEET_NAME = "人員名單";
+
+// 檢查設定
+const isConfigured = GOOGLE_API_KEY !== "YOUR_API_KEY_HERE" && GOOGLE_SHEET_ID !== "YOUR_SHEET_ID_HERE";
 
 const CFG = {
   ic:        {label:'事故指揮官 IC', group:'指揮幕僚', hs:'ic',   leaderRole:'指揮官'},
@@ -254,38 +272,24 @@ const ROSTER_GROUPS = [
 ];
 
 const DATA = {};
-const DEFAULTS = {
-  ic:      [],
-  safety:  [],
-  liaison: [],
-  ops:     [],
-  med:     [],
-  triage:  [],
-  treatment: [],
-  minor:   [],
-  transport: [],
-  rescue:  [],
-  squad1:  [],
-  squad2:  [],
-  squad3:  [],
-  plan:    [],
-  log:     [],
-};
 
 function initializeDATA() {
   Object.keys(CFG).forEach(k => { 
-    DATA[k] = (DEFAULTS[k]||[]).map(m=>({...m})); 
+    DATA[k] = [];
   });
 }
 
 initializeDATA();
 
 let CUR = null;
-let ORIGINAL_DATA = null;
 
 function openModal(k) {
+  if(!isConfigured) {
+    showToast('❌ 需要先設定 API Key 和 Sheet ID');
+    document.getElementById('setup-panel').style.display = 'block';
+    return;
+  }
   CUR = k;
-  ORIGINAL_DATA = JSON.parse(JSON.stringify(DATA[k]));
   const c = CFG[k], ts = HS[c.hs];
   const tag = document.getElementById('mtag');
   tag.textContent = c.label; tag.style.background = ts.bg; tag.style.color = ts.color;
@@ -297,7 +301,7 @@ function openModal(k) {
 function renderMList(k) {
   const c = CFG[k], list = document.getElementById('mlist');
   list.innerHTML = '';
-  if (!DATA[k].length) DATA[k].push({role:c.leaderRole, name:'', bg:''});
+  if (!DATA[k].length) DATA[k].push({role:c.leaderRole, name:'', bg:'', rowIndex: null});
   DATA[k].forEach((m,i) => {
     const row = document.createElement('div');
     row.className = 'mrow';
@@ -310,7 +314,7 @@ function renderMList(k) {
 }
 
 function esc(s){return (s||'').replace(/"/g,'&quot;');}
-function addRow(){if(!CUR)return;DATA[CUR].push({role:'組員',name:'',bg:''});renderMList(CUR);}
+function addRow(){if(!CUR)return;DATA[CUR].push({role:'組員',name:'',bg:'', rowIndex: null});renderMList(CUR);}
 function delRow(i){if(!CUR)return;DATA[CUR].splice(i,1);renderMList(CUR);}
 
 async function saveModal(){
@@ -324,128 +328,20 @@ async function saveModal(){
   
   DATA[CUR]=newData;
   
+  // 更新到 Google Sheet
   for(let i = 0; i < newData.length; i++) {
     const newMember = newData[i];
-    const oldMember = ORIGINAL_DATA[i];
+    const oldMember = DATA[CUR][i];
     
     if(newMember.name) {
-      if(oldMember && oldMember.name && oldMember.rowIndex) {
-        // 如果原本有資料，檢查是否修改
-        if(oldMember.name !== newMember.name || oldMember.role !== newMember.role || oldMember.bg !== newMember.bg) {
-          console.log('🔄 偵測到修改：', oldMember, ' → ', newMember);
-          // 更新 Google Sheet 中的該行
-          await updatePersonInSheet(oldMember.rowIndex, CUR, newMember);
-        }
-      } else {
-        // 新增的人員
-        await syncToGoogleSheet(CUR, newMember);
-      }
-    } else if(oldMember && oldMember.name && oldMember.rowIndex) {
-      // 刪除了這個人員
-      await deletePersonFromSheetSync(oldMember.rowIndex);
+      await appendRowToSheet(c.label, newMember.role, newMember.name, newMember.bg);
     }
   }
   
   updateNode(CUR); closeModal(); renderRoster(); updateStatus();
+  showToast('✅ 已保存並同步');
   
-  setTimeout(() => loadDataFromGoogleSheet(), 500);
-}
-
-async function syncToGoogleSheet(key, member) {
-  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
-    showToast('⚠️ 未設定 Google Apps Script URL，資料無法同步。請參考上方設定步驟');
-    return;
-  }
-  try {
-    const payload = {
-      role: CFG[key].label,
-      title: member.role,
-      name: member.name,
-      bg: member.bg,
-    };
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json();
-    if(result.success) {
-      showToast('✅ 已同步至 Google Sheet');
-    } else if(result.isDuplicate) {
-      showToast('⚠️ ' + result.message + '，跳過重複登錄');
-    } else {
-      showToast('❌ 上傳失敗：' + (result.error || '未知錯誤'));
-    }
-  } catch(err) {
-    showToast('❌ 同步失敗：' + err.message);
-  }
-}
-
-async function updatePersonInSheet(rowIndex, key, member) {
-  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
-    showToast('⚠️ 無法更新');
-    return false;
-  }
-  try {
-    const payload = {
-      rowIndex: rowIndex,
-      role: CFG[key].label,
-      title: member.role,
-      name: member.name,
-      bg: member.bg,
-    };
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json();
-    if(result.success) {
-      showToast('✅ 已更新此人員');
-      return true;
-    } else {
-      showToast('❌ 更新失敗');
-      return false;
-    }
-  } catch(err) {
-    showToast('❌ 更新失敗：' + err.message);
-    return false;
-  }
-}
-
-async function deletePersonFromSheetSync(rowIndex) {
-  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
-    return false;
-  }
-  try {
-    const url = GOOGLE_SCRIPT_URL + '?rowIndex=' + rowIndex;
-    const response = await fetch(url, { method: 'GET' });
-    const result = await response.json();
-    return result.success;
-  } catch(err) {
-    console.log('❌ 同步刪除失敗:', err.message);
-    return false;
-  }
-}
-
-async function deletePersonFromSheet(rowIndex) {
-  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
-    showToast('⚠️ 無法刪除');
-    return;
-  }
-  try {
-    const url = GOOGLE_SCRIPT_URL + '?rowIndex=' + rowIndex;
-    const response = await fetch(url, {
-      method: 'GET',
-    });
-    const result = await response.json();
-    if(result.success) {
-      showToast('✅ 已刪除此人員');
-      setTimeout(() => loadDataFromGoogleSheet(), 500);
-    } else {
-      showToast('❌ 刪除失敗');
-    }
-  } catch(err) {
-    showToast('❌ 刪除失敗：' + err.message);
-  }
+  setTimeout(() => loadDataFromSheet(), 500);
 }
 
 function closeModal(){document.getElementById('mbg').classList.remove('open');CUR=null;}
@@ -479,18 +375,10 @@ function renderRoster(){
     else{
       allMembers.forEach(m=>{
         const row=document.createElement('div'); row.className='r-row';
-        row.style.justifyContent='space-between';
         const nameDiv = document.createElement('div');
         nameDiv.style.flex='1';
         nameDiv.innerHTML=`<span class="r-role">${m.section} · ${m.role}</span><span class="r-name">${m.name}</span>${m.bg?'<span class="r-bg">'+m.bg+'</span>':''}`;
         row.appendChild(nameDiv);
-        
-        const delBtn = document.createElement('button');
-        delBtn.className='r-del-btn';
-        delBtn.innerHTML='×';
-        delBtn.onclick=()=>deletePersonFromSheet(m.rowIndex);
-        row.appendChild(delBtn);
-        
         body.appendChild(row);
       });
     }
@@ -533,62 +421,84 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-async function loadDataFromGoogleSheet() {
-  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
-    console.log('❌ 未設定有效的 Google Apps Script URL');
-    return;
-  }
+// Google Sheets API 函數
+async function appendRowToSheet(role, title, name, bg) {
+  if(!isConfigured) return;
+  
   try {
-    console.log('🔄 開始從 Google Sheet 讀取資料...');
-    const response = await fetch(GOOGLE_SCRIPT_URL);
-    console.log('📡 API 回應狀態:', response.status);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${SHEET_NAME}!A:E:append?valueInputOption=USER_ENTERED&key=${GOOGLE_API_KEY}`;
+    const values = [[new Date().toLocaleString('zh-TW'), role, title, name, bg]];
     
-    const result = await response.json();
-    console.log('📊 API 返回的資料:', result);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    });
     
-    if(result.success && result.data && result.data.length > 0) {
-      console.log('✅ 讀取成功，共', result.data.length, '筆資料');
-      
-      Object.keys(DATA).forEach(k => { DATA[k] = []; });
-      
-      result.data.forEach((item, idx) => {
-        const roleLabel = item.role;
-        console.log('📍 處理第', idx+1, '筆：職位="' + roleLabel + '"、姓名="' + item.name + '"');
-        
-        const key = Object.keys(CFG).find(k => CFG[k].label === roleLabel);
-        if(key) {
-          const member = {
-            role: item.title,
-            name: item.name,
-            bg: item.bg,
-            rowIndex: item.rowIndex
-          };
-          DATA[key].push(member);
-          console.log('✔️ 成功對應到', key, '，現在該職位共', DATA[key].length, '人');
-        } else {
-          console.log('⚠️ 警告：找不到職位代碼，職位標籤為："' + roleLabel + '"');
-          console.log('📋 可用的職位標籤:', Object.keys(CFG).map(k => CFG[k].label));
-        }
-      });
-      
-      console.log('📋 最終 DATA 物件:', DATA);
-      renderRoster();
-      updateStatus();
-      Object.keys(CFG).forEach(k => updateNode(k));
-      console.log('✅ 網頁已更新完成');
-    } else {
-      console.log('⚠️ 沒有讀取到資料，或 API 返回失敗:', result);
-    }
+    if(!response.ok) throw new Error('API Error');
+    console.log('✅ 已上傳到 Google Sheet');
   } catch(err) {
-    console.log('❌ 讀取失敗:', err.message, err);
+    console.error('❌ 同步失敗:', err);
   }
 }
 
-Object.keys(CFG).forEach(k=>updateNode(k));
-renderRoster(); updateStatus();
+async function loadDataFromSheet() {
+  if(!isConfigured) {
+    document.getElementById('sync-status').textContent = '⚠️ 未配置 API';
+    document.getElementById('setup-panel').style.display = 'block';
+    return;
+  }
+  
+  try {
+    document.getElementById('sync-status').textContent = '🔄 同步中...';
+    
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_API_KEY}`;
+    const response = await fetch(url);
+    
+    if(!response.ok) throw new Error('API Error');
+    
+    const result = await response.json();
+    const rows = result.values || [];
+    
+    // 清空所有資料
+    Object.keys(DATA).forEach(k => { DATA[k] = []; });
+    
+    // 跳過標題行，讀取資料
+    for(let i = 1; i < rows.length; i++) {
+      const [timestamp, role, title, name, bg] = rows[i] || [];
+      
+      const key = Object.keys(CFG).find(k => CFG[k].label === role);
+      if(key && name) {
+        DATA[key].push({role: title, name, bg, rowIndex: i});
+      }
+    }
+    
+    renderRoster();
+    updateStatus();
+    Object.keys(CFG).forEach(k => updateNode(k));
+    
+    document.getElementById('sync-status').textContent = '✅ 同步成功（' + (rows.length - 1) + ' 筆資料）';
+    console.log('✅ 讀取成功');
+  } catch(err) {
+    document.getElementById('sync-status').textContent = '❌ 同步失敗：' + err.message;
+    console.error('❌ 讀取失敗:', err);
+  }
+}
 
-loadDataFromGoogleSheet();
-setInterval(loadDataFromGoogleSheet, 3000);
+async function refreshData() {
+  await loadDataFromSheet();
+}
+
+// 初始化
+if(isConfigured) {
+  Object.keys(CFG).forEach(k=>updateNode(k));
+  renderRoster(); updateStatus();
+  loadDataFromSheet();
+} else {
+  document.getElementById('setup-panel').style.display = 'block';
+  document.getElementById('sync-status').textContent = '⚠️ 請先配置 API Key 和 Sheet ID';
+}
 </script>
+
 </body>
 </html>
