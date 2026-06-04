@@ -259,7 +259,14 @@ const DEFAULTS = {
   ops:     [{role:'組長',   name:'高誌駿', bg:''}],
   log:     [{role:'組長',   name:'明麗',   bg:''}],
 };
-Object.keys(CFG).forEach(k => { DATA[k] = (DEFAULTS[k]||[]).map(m=>({...m})); });
+
+function initializeDATA() {
+  Object.keys(CFG).forEach(k => { 
+    DATA[k] = (DEFAULTS[k]||[]).map(m=>({...m})); 
+  });
+}
+
+initializeDATA();
 
 let CUR = null;
 
@@ -422,15 +429,15 @@ async function loadDataFromGoogleSheet() {
     const result = await response.json();
     console.log('📊 API 返回的資料:', result);
     
-    if(result.success && result.data) {
+    if(result.success && result.data && result.data.length > 0) {
       console.log('✅ 讀取成功，共', result.data.length, '筆資料');
       
-      DATA = {};
-      Object.keys(CFG).forEach(k => { DATA[k] = []; });
+      // 清空現有資料（不是重新賦值）
+      Object.keys(DATA).forEach(k => { DATA[k] = []; });
       
       result.data.forEach((item, idx) => {
         const roleLabel = item.role;
-        console.log('📍 處理第', idx+1, '筆：職位=', roleLabel, '、姓名=', item.name);
+        console.log('📍 處理第', idx+1, '筆：職位="' + roleLabel + '"、姓名="' + item.name + '"');
         
         const key = Object.keys(CFG).find(k => CFG[k].label === roleLabel);
         if(key) {
@@ -440,9 +447,10 @@ async function loadDataFromGoogleSheet() {
             bg: item.bg
           };
           DATA[key].push(member);
-          console.log('✔️ 成功對應到', key);
+          console.log('✔️ 成功對應到', key, '，現在該職位共', DATA[key].length, '人');
         } else {
-          console.log('⚠️ 找不到職位代碼，職位標籤為:', roleLabel);
+          console.log('⚠️ 警告：找不到職位代碼，職位標籤為："' + roleLabel + '"');
+          console.log('📋 可用的職位標籤:', Object.keys(CFG).map(k => CFG[k].label));
         }
       });
       
@@ -450,12 +458,12 @@ async function loadDataFromGoogleSheet() {
       renderRoster();
       updateStatus();
       Object.keys(CFG).forEach(k => updateNode(k));
-      console.log('✅ 網頁已更新');
+      console.log('✅ 網頁已更新完成');
     } else {
-      console.log('❌ API 返回失敗:', result.error);
+      console.log('⚠️ 沒有讀取到資料，或 API 返回失敗:', result);
     }
   } catch(err) {
-    console.log('❌ 讀取失敗:', err.message);
+    console.log('❌ 讀取失敗:', err.message, err);
   }
 }
 
