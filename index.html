@@ -255,11 +255,21 @@ const ROSTER_GROUPS = [
 
 const DATA = {};
 const DEFAULTS = {
-  ic:      [{role:'指揮官', name:'黃碩焜', bg:''}],
-  safety:  [{role:'安全官', name:'何長益', bg:''}],
-  liaison: [{role:'聯絡官', name:'張皓亭', bg:''}],
-  ops:     [{role:'組長',   name:'高誌駿', bg:''}],
-  log:     [{role:'組長',   name:'明麗',   bg:''}],
+  ic:      [],
+  safety:  [],
+  liaison: [],
+  ops:     [],
+  med:     [],
+  triage:  [],
+  treatment: [],
+  minor:   [],
+  transport: [],
+  rescue:  [],
+  squad1:  [],
+  squad2:  [],
+  squad3:  [],
+  plan:    [],
+  log:     [],
 };
 
 function initializeDATA() {
@@ -271,9 +281,11 @@ function initializeDATA() {
 initializeDATA();
 
 let CUR = null;
+let ORIGINAL_DATA = null;
 
 function openModal(k) {
   CUR = k;
+  ORIGINAL_DATA = JSON.parse(JSON.stringify(DATA[k]));
   const c = CFG[k], ts = HS[c.hs];
   const tag = document.getElementById('mtag');
   tag.textContent = c.label; tag.style.background = ts.bg; tag.style.color = ts.color;
@@ -304,14 +316,38 @@ function delRow(i){if(!CUR)return;DATA[CUR].splice(i,1);renderMList(CUR);}
 async function saveModal(){
   if(!CUR)return;
   const c=CFG[CUR], rows=document.querySelectorAll('#mlist .mrow');
-  DATA[CUR]=[];
+  const newData=[];
   rows.forEach((row,i)=>{
     const ins=row.querySelectorAll('input');
-    DATA[CUR].push({role:i===0?c.leaderRole:'組員', name:ins[0].value.trim(), bg:ins[1].value.trim()});
+    newData.push({role:i===0?c.leaderRole:'組員', name:ins[0].value.trim(), bg:ins[1].value.trim()});
   });
   
-  for(let m of DATA[CUR]){
-    if(m.name) await syncToGoogleSheet(CUR, m);
+  DATA[CUR]=newData;
+  
+  for(let i = 0; i < newData.length; i++) {
+    const newMember = newData[i];
+    const oldMember = ORIGINAL_DATA[i];
+    
+    if(newMember.name) {
+      if(oldMember && oldMember.name) {
+        // 如果原本有資料，檢查是否修改
+        if(oldMember.name !== newMember.name || oldMember.role !== newMember.role || oldMember.bg !== newMember.bg) {
+          console.log('🔄 偵測到修改：', oldMember, ' → ', newMember);
+          // 先刪除舊記錄（需要 rowIndex）
+          if(oldMember.rowIndex) {
+            await deletePersonFromSheetSync(oldMember.rowIndex);
+          }
+          // 再添加新記錄
+          await syncToGoogleSheet(CUR, newMember);
+        }
+      } else {
+        // 新增的人員
+        await syncToGoogleSheet(CUR, newMember);
+      }
+    } else if(oldMember && oldMember.name && oldMember.rowIndex) {
+      // 刪除了這個人員
+      await deletePersonFromSheetSync(oldMember.rowIndex);
+    }
   }
   
   updateNode(CUR); closeModal(); renderRoster(); updateStatus();
@@ -348,14 +384,29 @@ async function syncToGoogleSheet(key, member) {
   }
 }
 
+async function deletePersonFromSheetSync(rowIndex) {
+  if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+    return false;
+  }
+  try {
+    const url = GOOGLE_SCRIPT_URL + '?rowIndex=' + rowIndex;
+    const response = await fetch(url, { method: 'GET' });
+    const result = await response.json();
+    return result.success;
+  } catch(err) {
+    console.log('❌ 同步刪除失敗:', err.message);
+    return false;
+  }
+}
+
 async function deletePersonFromSheet(rowIndex) {
   if(!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
     showToast('⚠️ 無法刪除');
     return;
   }
   try {
-    const url = GOOGLE_SCRIPT_URL.replace('/exec', '') + '/exec?rowIndex=' + rowIndex;
-    const response = await fetch(url.replace('/exec', '') + '/exec?rowIndex=' + rowIndex, {
+    const url = GOOGLE_SCRIPT_URL + '?rowIndex=' + rowIndex;
+    const response = await fetch(url, {
       method: 'GET',
     });
     const result = await response.json();
@@ -471,7 +522,6 @@ async function loadDataFromGoogleSheet() {
     if(result.success && result.data && result.data.length > 0) {
       console.log('✅ 讀取成功，共', result.data.length, '筆資料');
       
-      // 清空現有資料（不是重新賦值）
       Object.keys(DATA).forEach(k => { DATA[k] = []; });
       
       result.data.forEach((item, idx) => {
@@ -483,7 +533,8 @@ async function loadDataFromGoogleSheet() {
           const member = {
             role: item.title,
             name: item.name,
-            bg: item.bg
+            bg: item.bg,
+            rowIndex: item.rowIndex
           };
           DATA[key].push(member);
           console.log('✔️ 成功對應到', key, '，現在該職位共', DATA[key].length, '人');
